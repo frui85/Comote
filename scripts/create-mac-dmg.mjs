@@ -7,17 +7,30 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const releaseDir = join(process.cwd(), "release");
 const pkg = JSON.parse(await readFile(join(process.cwd(), "package.json"), "utf8"));
+
+// Map the requested arch to its Rust target triple. Defaults to arm64 so the
+// existing `dist:mac` invocation (no arg) keeps producing the Apple Silicon DMG.
+const arch = process.argv[2] ?? "arm64";
+const targetByArch = {
+  arm64: "aarch64-apple-darwin",
+  x64: "x86_64-apple-darwin",
+};
+const target = targetByArch[arch];
+if (!target) {
+  throw new Error(`Unknown macOS arch: ${arch} (expected arm64 or x64)`);
+}
+
 const appPath = join(
   process.cwd(),
   "src-tauri",
   "target",
-  "aarch64-apple-darwin",
+  target,
   "release",
   "bundle",
   "macos",
   "Comote.app",
 );
-const dmgPath = join(releaseDir, `Comote-${pkg.version}-arm64.dmg`);
+const dmgPath = join(releaseDir, `Comote-${pkg.version}-${arch}.dmg`);
 
 await mkdir(releaseDir, { recursive: true });
 

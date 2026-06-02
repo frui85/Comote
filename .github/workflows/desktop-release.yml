@@ -28,6 +28,27 @@ jobs:
           path: release/Comote-*-arm64.dmg
           if-no-files-found: error
 
+  mac-x64:
+    name: Comote macOS Intel DMG
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      # macos-14 runners are Apple Silicon; add the Intel target so the arm64
+      # host can cross-compile the x86_64 .app.
+      - run: rustup target add x86_64-apple-darwin
+      - run: npm ci
+      - run: npm test
+      - run: npm run dist:mac:x64
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Comote-x64-dmg
+          path: release/Comote-*-x64.dmg
+          if-no-files-found: error
+
   windows-x64:
     name: Comote Windows x64 installer
     runs-on: windows-2022
@@ -48,13 +69,17 @@ jobs:
 
   publish-release:
     name: Publish GitHub Release
-    needs: [mac-arm64, windows-x64]
+    needs: [mac-arm64, mac-x64, windows-x64]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v7
         with:
           name: Comote-arm64-dmg
+          path: release-artifacts
+      - uses: actions/download-artifact@v7
+        with:
+          name: Comote-x64-dmg
           path: release-artifacts
       - uses: actions/download-artifact@v7
         with:
@@ -70,6 +95,7 @@ jobs:
 
             Downloads:
             - **macOS (Apple Silicon)** — `Comote-*-arm64.dmg`
+            - **macOS (Intel)** — `Comote-*-x64.dmg`
             - **Windows x64** — `Comote-Setup-*-x64.exe`
 
             See [README](https://github.com/GavinYangAI/comote#readme) for installation and setup.

@@ -16,7 +16,9 @@ await mkdir(cacheDir, { recursive: true });
 if (mode === "current") {
   await copyFile(process.execPath, join(binariesDir, sidecarName(currentTargetTriple())));
 } else if (mode === "aarch64-apple-darwin") {
-  await buildMacAarch64Node();
+  await buildMacNode("arm64", "aarch64-apple-darwin");
+} else if (mode === "x86_64-apple-darwin") {
+  await buildMacNode("x64", "x86_64-apple-darwin");
 } else if (mode === "x86_64-pc-windows-msvc") {
   await buildWindowsNode();
 } else {
@@ -25,17 +27,17 @@ if (mode === "current") {
 
 console.log(`Prepared Comote sidecar for ${mode}`);
 
-async function buildMacAarch64Node() {
+async function buildMacNode(arch, targetTriple) {
   if (process.platform !== "darwin") {
-    throw new Error("macOS aarch64 sidecar must be built on macOS.");
+    throw new Error(`macOS ${targetTriple} sidecar must be built on macOS.`);
   }
-  const armOutputPath = join(binariesDir, sidecarName("aarch64-apple-darwin"));
-  if (await isUsableSidecar(armOutputPath)) {
+  const outputPath = join(binariesDir, sidecarName(targetTriple));
+  if (await isUsableSidecar(outputPath)) {
     return;
   }
-  const armNode = await downloadNodeRuntime("darwin", "arm64");
-  await rm(armOutputPath, { force: true });
-  await copyFile(armNode, armOutputPath);
+  const node = await downloadNodeRuntime("darwin", arch);
+  await rm(outputPath, { force: true });
+  await copyFile(node, outputPath);
 }
 
 async function buildWindowsNode() {
