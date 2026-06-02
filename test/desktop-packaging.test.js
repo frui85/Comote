@@ -9,7 +9,10 @@ test("desktop packaging targets the requested Tauri installer artifacts", async 
   assert.match(packageJson.version, /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/);
   assert.match(packageJson.scripts["dist:mac"], /--bundles app/);
   assert.match(packageJson.scripts["dist:mac"], /--target aarch64-apple-darwin/);
-  assert.match(packageJson.scripts["dist:mac"], /create-mac-dmg\.mjs/);
+  assert.match(packageJson.scripts["dist:mac"], /create-mac-dmg\.mjs arm64/);
+  assert.match(packageJson.scripts["dist:mac:x64"], /--bundles app/);
+  assert.match(packageJson.scripts["dist:mac:x64"], /--target x86_64-apple-darwin/);
+  assert.match(packageJson.scripts["dist:mac:x64"], /create-mac-dmg\.mjs x64/);
   assert.match(packageJson.scripts["dist:win"], /--bundles nsis/);
   assert.match(packageJson.scripts["dist:win"], /--target x86_64-pc-windows-msvc/);
   assert.match(packageJson.scripts["dist:win"], /collect-tauri-artifacts\.mjs win/);
@@ -29,8 +32,8 @@ test("mac sidecar builder refreshes stale Homebrew node shims", async () => {
 
   assert.match(sidecarScript, /isUsableSidecar/);
   assert.match(sidecarScript, /MIN_STANDALONE_NODE_BYTES/);
-  assert.match(sidecarScript, /rm\(armOutputPath,\s*\{\s*force:\s*true\s*\}\)/);
-  assert.doesNotMatch(sidecarScript, /if\s*\(\s*await exists\(armOutputPath\)\s*\)\s*\{\s*return;\s*\}/);
+  assert.match(sidecarScript, /rm\(outputPath,\s*\{\s*force:\s*true\s*\}\)/);
+  assert.doesNotMatch(sidecarScript, /if\s*\(\s*await exists\(outputPath\)\s*\)\s*\{\s*return;\s*\}/);
 });
 
 test("desktop error pages can use data urls without crashing Tauri", async () => {
